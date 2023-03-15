@@ -1,61 +1,33 @@
-/* eslint-disable max-len */
 
-/*
-  Hook this script to index.html
-  by adding `<script src="script.js">` just before your closing `</body>` tag
-*/
-
-/*
-  ## Utility Functions
-    Under this comment place any utility functions you need - like an inclusive random number selector
-    https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/random
-*/
+function getRandomIntInclusive(min, max) {
+  min = Math.ceil(min);
+  max = Math.floor(max);
+  return Math.floor(Math.random() * (max - min + 1) + min); // The maximum is inclusive and the minimum is inclusive
+}
 
 function injectHTML(list) {
+  
   console.log('fired injectHTML');
-  /*
-  ## JS and HTML Injection
-    There are a bunch of methods to inject text or HTML into a document using JS
-    Mainly, they're considered "unsafe" because they can spoof a page pretty easily
-    But they're useful for starting to understand how websites work
-    the usual ones are element.innerText and element.innerHTML
-    Here's an article on the differences if you want to know more:
-    https://developer.mozilla.org/en-US/docs/Web/API/Node/textContent#differences_from_innertext
-
-  ## What to do in this function
-    - Accept a list of restaurant objects
-    - using a .forEach method, inject a list element into your index.html for every element in the list
-    - Display the name of that restaurant and what category of food it is
-*/
+  const target = document.querySelector('#restaurant_list');
+  target.innerHTML='';
+  list.forEach((item, index) => {
+    const str = `<li>${item.name}</li>`;
+    target.innerHTML += str
+    
+  });
 }
 
-function processRestaurants(list) {
-  console.log('fired restaurants list');
+function cutRestaurantList(list) {
 
-  /*
-    ## Process Data Separately From Injecting It
-      This function should accept your 1,000 records
-      then select 15 random records
-      and return an object containing only the restaurant's name, category, and geocoded location
-      So we can inject them using the HTML injection function
-
-      You can find the column names by carefully looking at your single returned record
-      https://data.princegeorgescountymd.gov/Health/Food-Inspection/umjn-t2iz
-
-    ## What to do in this function:
-
-    - Create an array of 15 empty elements (there are a lot of fun ways to do this, and also very basic ways)
-    - using a .map function on that range,
-    - Make a list of 15 random restaurants from your list of 100 from your data request
-    - Return only their name, category, and location
-    - Return the new list of 15 restaurants so we can work on it separately in the HTML injector
-  */
+  console.log('fired cut list');
+  const range = [...Array(15).keys()];
+  return newArray = range.map((item) => {
+    const index = getRandomIntInclusive(0, list.length -1);
+    return list[index]
+  });
 }
 
-/*
-  Hook this script to index.html
-  by adding `<script src="script.js">` just before your closing `</body>` tag
-*/
+
 
 function filterList(list, query) {
   return list.filter((item) => {
@@ -67,106 +39,46 @@ function filterList(list, query) {
 
 async function mainEvent() { // the async keyword means we can make API requests
   const form = document.querySelector('.main_form'); // This class name needs to be set on your form before you can listen for an event on it
-  const filterButton = document.querySelector('.filter_button');
+  const filterButton = document.querySelector('#filter_button');
+  const loadDataButton = document.querySelector('#data_load');
+  const generatelistButton = document.querySelector('#generate');
+  const loadanimation = document.querySelector('#data_load_animation')
+  loadanimation.style.display = 'none';
   let currentList = [];
 
-  form.addEventListener('submit', async (submitEvent) => { // async has to be declared on every function that needs to "await" something
+  loadDataButton.addEventListener('click', async (submitEvent) => { // async has to be declared on every function that needs to "await" something
     
-    submitEvent.preventDefault(); // This prevents your page from going to http://localhost:3000/api even if your form still has an action set on it
-    console.log('form submission'); // this is substituting for a "breakpoint"
-
-    /*
-      ## GET requests and Javascript
-        We would like to send our GET request so we can control what we do with the results
-        But this blocks us sending a query string by default - ?resto='' won't exist
-
-        Let's get those form results before sending off our GET request using the Fetch API
-    */
-
-    // this is the preferred way to handle form data in JS in 2022
-    const formData = new FormData(submitEvent.target); // get the data from the listener target
-    const formProps = Object.fromEntries(formData); // Turn it into an object
-
-    // You can also access all forms in a document by using the document.forms collection
-    // But this will retrieve ALL forms, not just the one that "heard" a submit event - less good
-
-    /*
-      ## Retrieving information from an API
-        The Fetch API is relatively new,
-        and is much more convenient than previous data handling methods.
-        Here we make a basic GET request to the server using the Fetch method
-        to send a request to the routes defined in /server/routes/foodServiceRoutes.js
-
-      // this is a basic GET request
-      // It does not include any of your form values, though
-    */
+    console.log('loading data'); // this is substituting for a "breakpoint"
+    loadanimation.style.display = 'inline-block';
 
     const results = await fetch('https://data.princegeorgescountymd.gov/resource/umjn-t2iz.json');
-    console.log(results);
+    
 
     currentList = await results.json();
+
+    loadanimation.style.display = 'none';
     console.table(currentList);
 
-    /*
-   ## Get request with query parameters
-
-      const results = await fetch(`/api/foodServicePG?${new URLSearchParams(formProps)}`);
-
-      The above request uses "string interpolation" to include an encoded version of your form values
-      It works because it has a ? in the string
-      Replace line 37 with it, and try it with a / instead to see what your server console says
-
-      You can check what you sent to your server in your GET request
-      By opening the "network" tab in your browser developer tools and looking at the "name" column
-      This will also show you how long it takes a request to resolve
-    */
-
-    // This changes the response from the GET into data we can use - an "object"
-    const arrayFromJson = await results.json();
-    console.table(arrayFromJson.data); // this is called "dot notation"
-    // arrayFromJson.data - we're accessing a key called 'data' on the returned object
-    // it initially contains all 1,000 records from your request
   });
   filterButton.addEventListener('click', (event) => {
-    console.log('clicked Filterbutton');
+      console.log('clicked Filterbutton');
 
-    const formData = new FormData(form);
-    const formProps = Object.fromEntries(formData);
+      const formData = new FormData(form);
+      const formProps = Object.fromEntries(formData);
 
-    console.log(formProps);
-    const newList = filterList(currentList, formProps.resto);
-    console.log(newList)
-  })
-}
-
-/*
-  This adds an event listener that fires our main event only once our page elements have loaded
-  The use of the async keyword means we can "await" events before continuing in our scripts
-  In this case, we load some data when the form has submitted
-*/
-
-document.addEventListener('DOMContentLoaded', async () => mainEvent()); // the async keyword means we can make API requests
+      console.log(formProps);
+      const newList = filterList(currentList, formProps.resto);
+      
+      console.log(newList);
+      injectHTML(newList);
+  });
 
 
-
-async function mainEvent() {
-  /*
-    ## Main Event
-      Separating your main programming from your side functions will help you organize your thoughts
-      When you're not working in a heavily-commented "learning" file, this also is more legible
-      If you separate your work, when one piece is complete, you can save it and trust it
-  */
-
-  // the async keyword means we can make API requests
-  const form = document.querySelector('.main_form'); // get your main form so you can do JS with it
-  const submit = document.querySelector('button[type="submit"]'); // get a reference to your submit button
-  submit.style.display = 'none'; // let your submit button disappear
-
-  /*
-    Let's get some data from the API - it will take a second or two to load
-    This next line goes to the request for 'GET' in the file at /server/routes/foodServiceRoutes.js
-    It's at about line 27 - go have a look and see what we're retrieving and sending back.
-   */
+  generatelistButton.addEventListener('click', (event) => {
+    console.log('generate new list')
+    const restaurantList = cutRestaurantList(currentList);
+    injectHTML(restaurantList);
+  });
   const results = await fetch('/api/foodServicesPG');
   const arrayFromJson = await results.json(); // here is where we get the data from our request as JSON
 
@@ -206,11 +118,18 @@ async function mainEvent() {
       // We also have access to some form values, so we could filter the list based on name
     });
   }
+
+  
 }
 
 /*
-  This last line actually runs first!
-  It's calling the 'mainEvent' function at line 57
-  It runs first because the listener is set to when your HTML content has loaded
+  This adds an event listener that fires our main event only once our page elements have loaded
+  The use of the async keyword means we can "await" events before continuing in our scripts
+  In this case, we load some data when the form has submitted
 */
+
 document.addEventListener('DOMContentLoaded', async () => mainEvent()); // the async keyword means we can make API requests
+
+
+
+
